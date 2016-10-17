@@ -6,6 +6,7 @@ import random
 from datetime import date
 from protorpc import messages
 from google.appengine.ext import ndb
+import logging
 
 
 class User(ndb.Model):
@@ -23,6 +24,7 @@ class Game(ndb.Model):
     user_o = ndb.KeyProperty(required=True, kind='User')
     user_next_move = ndb.KeyProperty(required=True, kind='User')
     is_game_over = ndb.BooleanProperty(required=True, default=False)
+    is_cancelled = ndb.BooleanProperty(required=True, default=False)
 
     @classmethod
     def new_game(cls, user_x, user_o):
@@ -30,10 +32,8 @@ class Game(ndb.Model):
         game = Game(user_x=user_x, user_o=user_o,
                     user_next_move=user_x)
         # Generally accepted that user x will start.
-
-        #game.board = ['' for _ in range(9)]
         game.board = [[" ", " ", " "],
-                      ["x", "x", "x"],
+                      [" ", " ", " "],
                       [" ", " ", " "]]
         game.put()
         return game
@@ -74,6 +74,12 @@ class GameForm(messages.Message):
     is_game_over = messages.BooleanField(7, required=True)
 
 
+class GameForms(messages.Message):
+
+    """Container for multiple GameForm"""
+    items = messages.MessageField(GameForm, 1, repeated=True)
+
+
 class NewGameForm(messages.Message):
 
     """Used to create a new game"""
@@ -84,7 +90,9 @@ class NewGameForm(messages.Message):
 class MakeMoveForm(messages.Message):
 
     """Used to make a move in an existing game"""
-    guess = messages.IntegerField(1, required=True)
+    user_name = messages.StringField(1, required=True)
+    move_row_position = messages.IntegerField(2, required=True)
+    move_column_position = messages.IntegerField(3, required=True)
 
 
 class ScoreForm(messages.Message):

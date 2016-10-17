@@ -33,3 +33,10 @@ def CheckValuesAllEqual(lst):
             and not all(val == " " for val in lst):
         isEqual = True
     return isEqual
+
+
+def CheckIsBoardFull(board):
+    for cell in board:
+        if not cell == " ":
+            return False
+    return True
