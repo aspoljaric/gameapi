@@ -117,10 +117,10 @@ class TicTacToeApi(remote.Service):
                 game.is_game_over = True
             else:
                 # If not full, continue the game
-                # TODO send notification to other user to make
-                # a move
-                logging.info(game.board)
-
+                # and send a reminder email to the next  move user
+                taskqueue.add(url='/tasks/move_notification_email',
+                              params={'user_key': game.user_next_move.urlsafe(),
+                                      'game_key': game.key.urlsafe()})
         game.put()
         return game.to_form()
 
