@@ -36,7 +36,4 @@ def CheckValuesAllEqual(lst):
 
 
 def CheckIsBoardFull(board):
-    for cell in board:
-        if not cell == " ":
-            return False
-    return True
+    return not any(' ' in subl for subl in board)

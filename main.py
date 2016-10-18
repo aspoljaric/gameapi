@@ -55,7 +55,7 @@ class MoveNotificationEmail(webapp2.RequestHandler):
                        body)
 
 app = webapp2.WSGIApplication([
-    ('/crons/send_reminder', SendReminderEmail),
+    #('/crons/send_reminder', SendReminderEmail),
     ('/tasks/cache_average_attempts', UpdateAverageMovesRemaining),
     ('/tasks/move_notification_email', MoveNotificationEmail),
 ], debug=True)

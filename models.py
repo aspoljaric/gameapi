@@ -35,6 +35,9 @@ class Game(ndb.Model):
         game.board = [[" ", " ", " "],
                       [" ", " ", " "],
                       [" ", " ", " "]]
+        # game.board = [["x", "o", "x"],
+        #               ["o", "o", "x"],
+        #               ["x", " ", "o"]]
         game.put()
         return game
 
@@ -49,18 +52,46 @@ class Game(ndb.Model):
                         )
         return form
 
+    def stop_game(self, winner=None):
+        """Finishes the game"""
+        self.is_game_over = True
+        self.put()
+        if (winner == 'x'):
+            score_win = Score(game=self.key, user=self.user_x,
+                              date=date.today(), result='win')
+            score_win.put()
+            score_loss = Score(game=self.key, user=self.user_o,
+                               date=date.today(), result='loss')
+            score_loss.put()
+        elif (winner == 'o'):
+            score_win = Score(game=self.key, user=self.user_o,
+                              date=date.today(), result='win')
+            score_win.put()
+            score_loss = Score(game=self.key, user=self.user_o,
+                               date=date.today(), result='loss')
+            score_loss.put()
+        elif (winner == 'None'):
+            score_tie_x = Score(game=self.key, user=self.user_x,
+                                date=date.today(), result='tie')
+            score_tie_x.put()
+            score_tie_o = Score(game=self.key, user=self.user_o,
+                                date=date.today(), result='tie')
+            score_tie_o.put()
+
 
 class Score(ndb.Model):
 
     """Score object"""
+    game = ndb.KeyProperty(required=True, kind='Game')
     user = ndb.KeyProperty(required=True, kind='User')
     date = ndb.DateProperty(required=True)
-    won = ndb.BooleanProperty(required=True)
-    guesses = ndb.IntegerProperty(required=True)
+    result = ndb.StringProperty(required=True)
 
     def to_form(self):
-        return ScoreForm(user_name=self.user.get().name, won=self.won,
-                         date=str(self.date), guesses=self.guesses)
+        return ScoreForm(game_urlsafe_key=self.game.urlsafe(),
+                         date=str(self.date),
+                         user=self.user.get().name,
+                         result=self.result)
 
 
 class GameForm(messages.Message):
@@ -98,10 +129,10 @@ class MakeMoveForm(messages.Message):
 class ScoreForm(messages.Message):
 
     """ScoreForm for outbound Score information"""
-    user_name = messages.StringField(1, required=True)
-    date = messages.StringField(2, required=True)
-    won = messages.BooleanField(3, required=True)
-    guesses = messages.IntegerField(4, required=True)
+    game_urlsafe_key = messages.StringField(1, required=True)
+    user = messages.StringField(2, required=True)
+    date = messages.StringField(3, required=True)
+    result = messages.StringField(4, required=True)
 
 
 class ScoreForms(messages.Message):

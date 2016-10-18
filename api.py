@@ -106,21 +106,20 @@ class TicTacToeApi(remote.Service):
         game.user_next_move = user_next_move
 
         winner = apihelper.CheckWinner(game.board)
+        is_board_full = apihelper.CheckIsBoardFull(game.board)
 
+        # Check if board is full. We have a tie.
+        if (is_board_full and winner == 'None'):
+            game.stop_game(winner)
         # We have a winner 'x' or 'o'
-        if (winner != 'None'):
-            # end the game
-            game.is_game_over = True
+        elif (not is_board_full and winner != 'None'):
+            game.stop_game(winner)
+        # Continue the game
+        # and send a reminder email to the next move user
         else:
-            # Check if board is full
-            if (apihelper.CheckIsBoardFull(game.board)):
-                game.is_game_over = True
-            else:
-                # If not full, continue the game
-                # and send a reminder email to the next  move user
-                taskqueue.add(url='/tasks/move_notification_email',
-                              params={'user_key': game.user_next_move.urlsafe(),
-                                      'game_key': game.key.urlsafe()})
+            taskqueue.add(url='/tasks/move_notification_email',
+                          params={'user_key': game.user_next_move.urlsafe(),
+                                  'game_key': game.key.urlsafe()})
         game.put()
         return game.to_form()
 
@@ -169,27 +168,27 @@ class TicTacToeApi(remote.Service):
         else:
             raise endpoints.NotFoundException('Game not found.')
 
-    # @endpoints.method(response_message=ScoreForms,
-    #                   path='scores',
-    #                   name='get_scores',
-    #                   http_method='GET')
-    # def get_scores(self, request):
-    #     """Return all scores"""
-    #     return ScoreForms(items=[score.to_form() for score in Score.query()])
+    @endpoints.method(response_message=ScoreForms,
+                      path='scores',
+                      name='get_scores',
+                      http_method='GET')
+    def get_scores(self, request):
+        """Return all scores"""
+        return ScoreForms(items=[score.to_form() for score in Score.query()])
 
-    # @endpoints.method(request_message=USER_REQUEST,
-    #                   response_message=ScoreForms,
-    #                   path='scores/user/{user_name}',
-    #                   name='get_user_scores',
-    #                   http_method='GET')
-    # def get_user_scores(self, request):
-    #     """Returns all of an individual User's scores"""
-    #     user = User.query(User.name == request.user_name).get()
-    #     if not user:
-    #         raise endpoints.NotFoundException(
-    #                 'A User with that name does not exist!')
-    #     scores = Score.query(Score.user == user.key)
-    #     return ScoreForms(items=[score.to_form() for score in scores])
+    @endpoints.method(request_message=USER_REQUEST,
+                      response_message=ScoreForms,
+                      path='scores/user/{user_name}',
+                      name='get_user_scores',
+                      http_method='GET')
+    def get_user_scores(self, request):
+        """Returns all of an individual User's scores"""
+        user = User.query(User.name == request.user_name).get()
+        if not user:
+            raise endpoints.NotFoundException(
+                'A User with that name does not exist!')
+        scores = Score.query(Score.user == user.key)
+        return ScoreForms(items=[score.to_form() for score in scores])
 
     # @endpoints.method(response_message=StringMessage,
     #                   path='games/average_attempts',
