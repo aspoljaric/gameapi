@@ -57,19 +57,19 @@ class Game(ndb.Model):
         self.is_game_over = True
         self.put()
         if (winner == 'x'):
-            score_win = Score(game=self.key, user=self.user_x,
-                              date=date.today(), result='win')
-            score_win.put()
-            score_loss = Score(game=self.key, user=self.user_o,
-                               date=date.today(), result='loss')
-            score_loss.put()
+            score_win_x = Score(game=self.key, user=self.user_x,
+                                date=date.today(), result='win')
+            score_win_x.put()
+            score_loss_x = Score(game=self.key, user=self.user_o,
+                                 date=date.today(), result='loss')
+            score_loss_x.put()
         elif (winner == 'o'):
-            score_win = Score(game=self.key, user=self.user_o,
-                              date=date.today(), result='win')
-            score_win.put()
-            score_loss = Score(game=self.key, user=self.user_o,
-                               date=date.today(), result='loss')
-            score_loss.put()
+            score_win_o = Score(game=self.key, user=self.user_o,
+                                date=date.today(), result='win')
+            score_win_o.put()
+            score_loss_o = Score(game=self.key, user=self.user_o,
+                                 date=date.today(), result='loss')
+            score_loss_o.put()
         elif (winner == 'None'):
             score_tie_x = Score(game=self.key, user=self.user_x,
                                 date=date.today(), result='tie')
@@ -145,3 +145,28 @@ class StringMessage(messages.Message):
 
     """StringMessage-- outbound (single) string message"""
     message = messages.StringField(1, required=True)
+
+
+class Ranking(ndb.Model):
+
+    """Ranking object"""
+    user = ndb.KeyProperty(required=True, kind='User')
+    win_ratio = ndb.FloatProperty(required=True)
+
+    def to_form(self):
+        return RankingForm(
+            user=self.user.get().name,
+            win_ratio=self.win_ratio)
+
+
+class RankingForm(messages.Message):
+
+    """RankingForm for outbound Rank information"""
+    user = messages.StringField(1, required=True)
+    win_ratio = messages.FloatField(2, required=True)
+
+
+class RankingForms(messages.Message):
+
+    """Return multiple ScoreForms"""
+    items = messages.MessageField(RankingForm, 1, repeated=True)

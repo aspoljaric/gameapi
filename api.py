@@ -11,9 +11,9 @@ from protorpc import remote, messages
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
-from models import User, Game, Score
+from models import User, Game, Score, Ranking
 from models import StringMessage, NewGameForm, GameForm, MakeMoveForm,\
-    ScoreForms, GameForms
+    ScoreForms, GameForms, RankingForm, RankingForms
 from utils import get_by_urlsafe
 import apihelper
 
@@ -189,6 +189,39 @@ class TicTacToeApi(remote.Service):
                 'A User with that name does not exist!')
         scores = Score.query(Score.user == user.key)
         return ScoreForms(items=[score.to_form() for score in scores])
+
+    @endpoints.method(response_message=RankingForms,
+                      path='rankings',
+                      name='get_user_rankings',
+                      http_method='GET')
+    def get_user_rankings(self, request):
+        """Return all user rankings based on win/loss ratio"""
+        users = User.query()
+        ranking_list = []
+
+        if users:
+            for user in users:
+                wins = Score.query(Score.user == user.key).filter(
+                    Score.result == 'win').count()
+                ties = Score.query(Score.user == user.key).filter(
+                    Score.result == 'tie').count()
+                loss = Score.query(Score.user == user.key).filter(
+                    Score.result == 'loss').count()
+
+                total_games = wins + ties + loss
+                win_ratio = 0
+
+                if (wins != 0 and total_games != 0):
+                    win_ratio = float(wins) / float(total_games)
+
+                logging.info(win_ratio)
+                rank = Ranking(user=user.key, win_ratio=win_ratio)
+                ranking_list.append(rank)
+
+        sorted_ranking_list = sorted(
+            ranking_list, key=lambda Ranking: Ranking.win_ratio, reverse=True)
+        return RankingForms(
+            items=[rank.to_form() for rank in sorted_ranking_list])
 
     # @endpoints.method(response_message=StringMessage,
     #                   path='games/average_attempts',
