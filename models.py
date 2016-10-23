@@ -25,6 +25,7 @@ class Game(ndb.Model):
     user_next_move = ndb.KeyProperty(required=True, kind='User')
     is_game_over = ndb.BooleanProperty(required=True, default=False)
     is_cancelled = ndb.BooleanProperty(required=True, default=False)
+    history = ndb.PickleProperty()
 
     @classmethod
     def new_game(cls, user_x, user_o):
@@ -35,9 +36,7 @@ class Game(ndb.Model):
         game.board = [[" ", " ", " "],
                       [" ", " ", " "],
                       [" ", " ", " "]]
-        # game.board = [["x", "o", "x"],
-        #               ["o", "o", "x"],
-        #               ["x", " ", "o"]]
+        game.history = []
         game.put()
         return game
 

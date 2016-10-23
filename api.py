@@ -105,6 +105,12 @@ class TicTacToeApi(remote.Service):
             request.move_column_position] = move_marker
         game.user_next_move = user_next_move
 
+        # Populate the move in history
+        game.history.append(
+            ('Marker:', move_marker,
+                'Row:', request.move_row_position,
+                'Column:', request.move_column_position))
+
         winner = apihelper.CheckWinner(game.board)
         is_board_full = apihelper.CheckIsBoardFull(game.board)
 
@@ -222,6 +228,18 @@ class TicTacToeApi(remote.Service):
             ranking_list, key=lambda Ranking: Ranking.win_ratio, reverse=True)
         return RankingForms(
             items=[rank.to_form() for rank in sorted_ranking_list])
+
+    @endpoints.method(request_message=GET_GAME_REQUEST,
+                      response_message=StringMessage,
+                      path='game/{urlsafe_game_key}/history',
+                      name='get_game_history',
+                      http_method='GET')
+    def get_game_history(self, request):
+        """Return a Game's move history"""
+        game = get_by_urlsafe(request.urlsafe_game_key, Game)
+        if not game:
+            raise endpoints.NotFoundException('Game not found')
+        return StringMessage(message=str(game.history))
 
     # @endpoints.method(response_message=StringMessage,
     #                   path='games/average_attempts',
