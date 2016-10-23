@@ -26,7 +26,7 @@ MAKE_MOVE_REQUEST = endpoints.ResourceContainer(
 USER_REQUEST = endpoints.ResourceContainer(user_name=messages.StringField(1),
                                            email=messages.StringField(2))
 
-MEMCACHE_MOVES_REMAINING = 'MOVES_REMAINING'
+MEMCACHE_GAMES_ACTIVE = 'GAMES_ACTIVE'
 
 
 @endpoints.api(name='tic_tac_toe', version='v1')
@@ -126,6 +126,10 @@ class TicTacToeApi(remote.Service):
             taskqueue.add(url='/tasks/move_notification_email',
                           params={'user_key': game.user_next_move.urlsafe(),
                                   'game_key': game.key.urlsafe()})
+
+        # Update the status of the game
+        taskqueue.add(url='/tasks/cache_count_active_games')
+
         game.put()
         return game.to_form()
 
@@ -241,26 +245,24 @@ class TicTacToeApi(remote.Service):
             raise endpoints.NotFoundException('Game not found')
         return StringMessage(message=str(game.history))
 
-    # @endpoints.method(response_message=StringMessage,
-    #                   path='games/average_attempts',
-    #                   name='get_average_attempts_remaining',
-    #                   http_method='GET')
-    # def get_average_attempts(self, request):
-    #     """Get the cached average moves remaining"""
-    # return StringMessage(message=memcache.get(MEMCACHE_MOVES_REMAINING) or
-    # '')
+    @endpoints.method(response_message=StringMessage,
+                      path='games/active_games',
+                      name='get_active_games',
+                      http_method='GET')
+    def get_finished_games(self, request):
+        """Get the cached number of games currently being played"""
+        return StringMessage(
+            message=memcache.get(MEMCACHE_GAMES_ACTIVE) or '')
 
-    # @staticmethod
-    # def _cache_average_attempts():
-    #     """Populates memcache with the average moves remaining of Games"""
-    #     games = Game.query(Game.game_over == False).fetch()
-    #     if games:
-    #         count = len(games)
-    #         total_attempts_remaining = sum([game.attempts_remaining
-    #                                     for game in games])
-    #         average = float(total_attempts_remaining)/count
-    #         memcache.set(MEMCACHE_MOVES_REMAINING,
-    #                      'The average moves remaining is {:.2f}'.format(average))
+    @staticmethod
+    def _cache_count_active_games():
+        """Populates memcache with the number of current games being played"""
+        games_count = Game.query(Game.is_game_over == False).filter(
+            Game.is_cancelled == False).count()
+        if games_count:
+            memcache.set(
+                MEMCACHE_GAMES_ACTIVE,
+                'The current number of games being played is %s' % games_count)
 
 
 api = endpoints.api_server([TicTacToeApi])
