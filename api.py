@@ -224,7 +224,7 @@ class TicTacToeApi(remote.Service):
                 if (wins != 0 and total_games != 0):
                     win_ratio = float(wins) / float(total_games)
 
-                logging.info(win_ratio)
+                #logging.info(win_ratio)
                 rank = Ranking(user=user.key, win_ratio=win_ratio)
                 ranking_list.append(rank)
 

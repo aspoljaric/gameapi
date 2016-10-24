@@ -1,0 +1,50 @@
+Design Reflection
+-----------------
+
+1) "What additional properties did you add to your models and why?"
+
+Game model
+----------
+
+- I chose to use a PickleProperty to store the game "board" against the game itself.
+  This property was the most appropriate for a Python list and it would allow to get
+  the all the relevant information about the game without looking at other Kinds (tables)
+
+- I added user_x, user_o and user_next_move KeyProperties which are linked to the User Kind.
+  This allowed me to track who was X and O whilst also knowing who was due for the next turn.
+
+- I added the is_game_over boolean to allow the game logic to mark it as completed based on
+  the games rules.
+
+- The boolean field is_cancelled was added to be able to mark the game as "deleted". This way
+  no game is actually deleted, it is just filtered by on queries. This maintains history and
+  integrity as other Kinds may use the Game Key.
+
+- Game history was also added to the Game. The history field is a PickleProperty which allows
+  easy storage of a Python list. This keeps all relevant game information in one
+  location (Kind).
+
+Score model
+-----------
+
+- The sore model was modified to reflect the scoring of tic-tac-toe. I added the Game key (so
+  it could be linked to the game it originated from), user, date and the result (string - 'win',
+  'loss', 'tie').
+
+Ranking model
+-------------
+
+- I created this model to store the ranking of the users (win/loss ratio). However I don't commit
+  this to the data store, as this needs to be re-calculated each time the API is called. As the
+  application gets bigger and we have a massive number of users I could look at caching this.
+
+2) "What were some of the trade-offs or struggles you faced when implementing the new game logic?"
+
+- I decided to keep the game board size to 3x3 as this is a commonly used size. The game could be
+  changed to have larger sizes or user defined, but I have not seen in many places with anything
+  larger than 3x3.
+
+- With the win ratio I decided to keep ties out of it as technically it is not a win. I kept it
+  as a true win ratio i.e. total wins / total games. This may make ranking not as effective if
+  a lot of users play as many games would end in a tie. This may have to include ties in the
+  future if too many users rank the same.
