@@ -31,11 +31,11 @@ API
 ---
 ##Files Included:
  - api.py: Contains endpoints and game high level playing logic.
- - apihelper.py: Contains more complex game playing logic.
  - app.yaml: App configuration.
  - cron.yaml: Cronjob configuration.
  - main.py: Handler for taskqueue handler.
- - models.py: Entity and message definitions including helper methods.
+ - \models\*.py: Entity definitions including helper methods.
+ - \forms\*.py: Message definitions including helper methods.
  - utils.py: Helper function for retrieving ndb.Models by urlsafe Key string.
 
 ##Endpoints Included:
