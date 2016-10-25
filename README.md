@@ -34,8 +34,8 @@ API
  - app.yaml: App configuration.
  - cron.yaml: Cronjob configuration.
  - main.py: Handler for taskqueue handler.
- - \models\*.py: Entity definitions including helper methods.
- - \forms\*.py: Message definitions including helper methods.
+ - \models\\*.py: Entity definitions including helper methods.
+ - \forms\\*.py: Message definitions including helper methods.
  - utils.py: Helper function for retrieving ndb.Models by urlsafe Key string.
 
 ##Endpoints Included:

@@ -7,7 +7,8 @@ import webapp2
 from google.appengine.api import mail, app_identity
 from api import TicTacToeApi
 from utils import get_by_urlsafe
-from models import User, Game
+from models.game import *
+from models.user import *
 from google.appengine.ext import ndb
 
 

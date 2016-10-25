@@ -8,6 +8,7 @@ primarily with communication to/from the API's users."""
 import logging
 import endpoints
 from protorpc import remote, messages
+
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
@@ -95,62 +96,8 @@ class TicTacToeApi(remote.Service):
             raise endpoints.NotFoundException('Game not found.')
         if (game.is_game_over):
             raise endpoints.NotFoundException('Game is already over.')
-        user = User.query(User.name == request.user_name).get()
-        if (user == None):
-            raise endpoints.NotFoundException('User name not found.')
-        if (user.key != game.user_next_move):
-            raise endpoints.BadRequestException('It\'s not your turn.')
-
-        # Validate the move on the board
-        if (request.move_row_position < 0 or request.move_row_position > 3):
-            raise endpoints.BadRequestException(
-                'Move is invalid - Row number must be between 0 and 3.')
-        if (request.move_column_position < 0
-                or request.move_column_position > 3):
-            raise endpoints.BadRequestException(
-                'Move is invalid - Column number must be between 0 and 3.')
-        if (game.board[request.move_row_position][request.move_column_position]
-                != " "):
-            raise endpoints.BadRequestException(
-                'Move is invalid - Position has already been marked.')
-
-        # Work out if 'x' or 'o' based on user making the move
-        move_marker = 'o'
-        user_next_move = game.user_x
-        if (game.user_next_move == game.user_x):
-            move_marker = 'x'
-            user_next_move = game.user_o
-
-        game.board[request.move_row_position][
-            request.move_column_position] = move_marker
-        game.user_next_move = user_next_move
-
-        # Populate the move in history
-        game.history.append(
-            ('Marker:', move_marker,
-                'Row:', request.move_row_position,
-                'Column:', request.move_column_position))
-
-        winner = CheckWinner(game.board)
-        is_board_full = CheckIsBoardFull(game.board)
-
-        # Check if board is full. We have a tie.
-        if (is_board_full and winner == 'None'):
-            game.stop_game(winner)
-        # We have a winner 'x' or 'o'
-        elif (not is_board_full and winner != 'None'):
-            game.stop_game(winner)
-        # Continue the game
-        # and send a reminder email to the next move user
-        else:
-            taskqueue.add(url='/tasks/move_notification_email',
-                          params={'user_key': game.user_next_move.urlsafe(),
-                                  'game_key': game.key.urlsafe()})
-
-        # Update the status of the game
-        taskqueue.add(url='/tasks/cache_count_active_games')
-
-        game.put()
+        if game:
+          game.make_move(request)
         return game.to_form()
 
     @endpoints.method(request_message=USER_REQUEST,
